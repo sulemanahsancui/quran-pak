@@ -1,49 +1,119 @@
 import React from "react";
-import { Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 
 export const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+
+  const features = [
+    {
+      title: "Quran",
+      description: "Read and listen to the Holy Quran with translations",
+      icon: "📖",
+      path: "/quran",
+      color: "bg-green-500",
+    },
+    {
+      title: "Prayer Times",
+      description: "Get accurate prayer times for your location",
+      icon: "🕌",
+      path: "/prayer-times",
+      color: "bg-blue-500",
+    },
+    {
+      title: "Islamic Calendar",
+      description: "View Islamic dates and important events",
+      icon: "📅",
+      path: "/islamic-calendar",
+      color: "bg-purple-500",
+    },
+  ];
+
+  const comingSoonFeatures = [
+    {
+      title: "Qibla Direction",
+      description: "Find the direction of Qibla from your location",
+      icon: "🧭",
+      color: "bg-yellow-500",
+    },
+    {
+      title: "Islamic Duas",
+      description: "Collection of authentic duas from Quran and Hadith",
+      icon: "🤲",
+      color: "bg-red-500",
+    },
+    {
+      title: "Islamic Stories",
+      description: "Learn from the stories of prophets and companions",
+      icon: "📚",
+      color: "bg-indigo-500",
+    },
+  ];
+
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-      <div className="text-center">
-        <h1 className="text-4xl font-bold text-gray-900 mb-8">
-          Welcome to Quran App
-        </h1>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          <Link
-            to="/quran"
-            className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-2xl font-semibold text-green-600 mb-4">
-              Quran
-            </h2>
-            <p className="text-gray-600">
-              Read and listen to the Holy Quran with translations and audio
-              recitations.
-            </p>
-          </Link>
-          <Link
-            to="/prayer-times"
-            className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-2xl font-semibold text-green-600 mb-4">
-              Prayer Times
-            </h2>
-            <p className="text-gray-600">
-              Get accurate prayer times for your location and track your
-              prayers.
-            </p>
-          </Link>
-          <Link
-            to="/islamic-calendar"
-            className="p-6 bg-white rounded-lg shadow-md hover:shadow-lg transition-shadow"
-          >
-            <h2 className="text-2xl font-semibold text-green-600 mb-4">
-              Islamic Calendar
-            </h2>
-            <p className="text-gray-600">
-              View the Islamic calendar and important dates in the Hijri year.
-            </p>
-          </Link>
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">
+            Welcome to Islamic App
+          </h1>
+          <p className="text-xl text-gray-600 mb-12">
+            Your comprehensive Islamic companion
+          </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+          {features.map((feature) => (
+            <div
+              key={feature.title}
+              className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow duration-300 cursor-pointer"
+              onClick={() => navigate(feature.path)}
+            >
+              <div className={`${feature.color} p-6`}>
+                <div className="text-4xl mb-4">{feature.icon}</div>
+                <h2 className="text-2xl font-bold text-white mb-2">
+                  {feature.title}
+                </h2>
+                <p className="text-white opacity-90">{feature.description}</p>
+              </div>
+              <div className="p-6">
+                <button
+                  className={`w-full py-2 px-4 rounded-lg text-white ${feature.color} hover:opacity-90 transition-opacity`}
+                >
+                  Open
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        <div className="mt-16">
+          <h2 className="text-2xl font-bold text-gray-900 mb-8 text-center">
+            Features Coming Soon
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            {comingSoonFeatures.map((feature) => (
+              <div
+                key={feature.title}
+                className="bg-white rounded-xl shadow-lg overflow-hidden"
+              >
+                <div className={`${feature.color} p-6`}>
+                  <div className="text-4xl mb-4">{feature.icon}</div>
+                  <h2 className="text-2xl font-bold text-white mb-2">
+                    {feature.title}
+                  </h2>
+                  <p className="text-white opacity-90">{feature.description}</p>
+                </div>
+                <div className="p-6">
+                  <button
+                    className={`w-full py-2 px-4 rounded-lg text-white ${feature.color} opacity-50 cursor-not-allowed`}
+                    disabled
+                  >
+                    Coming Soon
+                  </button>
+                </div>
+              </div>
+            ))}
+          </div>
         </div>
       </div>
     </div>

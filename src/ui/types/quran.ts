@@ -10,6 +10,7 @@ export interface Surah {
 export interface Ayah {
   number: number;
   text: string;
+  translation: string;
   numberInSurah: number;
   juz: number;
   manzil: number;
@@ -17,6 +18,7 @@ export interface Ayah {
   ruku: number;
   hizbQuarter: number;
   sajda: boolean;
+  surah: Surah;
 }
 
 export interface QuranData {
@@ -25,7 +27,6 @@ export interface QuranData {
   currentAyah?: Ayah;
   audioUrl?: string;
 }
-
 
 export interface IslamicDate {
   date: string;
