@@ -17,6 +17,7 @@ export const QuranPage: React.FC = () => {
   const [loading, setLoading] = useState(true);
   const [loadingAyahs, setLoadingAyahs] = useState(false);
   const [activeTab, setActiveTab] = useState<Tab>("surahs");
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   useEffect(() => {
     const fetchSurahs = async () => {
@@ -32,6 +33,37 @@ export const QuranPage: React.FC = () => {
 
     fetchSurahs();
   }, []);
+
+  useEffect(() => {
+    // Set up tray event listeners
+    window.electron?.tray.onGoToPosition((position) => {
+      setCurrentPage(position.page);
+      handlePageChange(position.page);
+    });
+
+    window.electron?.tray.onNavigatePage((delta) => {
+      const newPage = currentPage + delta;
+      if (newPage >= 1 && newPage <= 604) {
+        setCurrentPage(newPage);
+        handlePageChange(newPage);
+      }
+    });
+
+    window.electron?.tray.onOpenSettings(() => {
+      // TODO: Implement settings dialog
+      console.log("Opening settings...");
+    });
+
+    // Clean up listeners
+    return () => {
+      // Note: The preload script handles cleanup of IPC listeners
+    };
+  }, [currentPage]);
+
+  // Update last position when page changes
+  useEffect(() => {
+    window.electron?.tray.updateLastPosition(currentPage);
+  }, [currentPage]);
 
   const handleSurahSelect = async (surahNumber: number) => {
     setLoadingAyahs(true);
@@ -52,10 +84,16 @@ export const QuranPage: React.FC = () => {
     setLoadingAyahs(true);
     try {
       setSelectedPage(pageNumber);
-      const ayahs = await quranService.getPage(pageNumber);
-      setAyahs(ayahs);
+      const result = await quranService.getPage(pageNumber);
+      if (result && result.ayahs) {
+        setAyahs(result.ayahs);
+      } else {
+        console.error("No ayahs data received");
+        setAyahs([]);
+      }
     } catch (error) {
       console.error("Error loading page:", error);
+      setAyahs([]);
     } finally {
       setLoadingAyahs(false);
     }
@@ -144,13 +182,17 @@ export const QuranPage: React.FC = () => {
               loading={loadingAyahs}
               onPageChange={handlePageChange}
             />
-          ) : (
+          ) : selectedSurah ? (
             <SurahView
               surah={selectedSurah}
               ayahs={ayahs}
               loading={loadingAyahs}
               onSurahSelect={handleSurahSelect}
             />
+          ) : (
+            <div className="flex items-center justify-center h-full text-gray-500">
+              <p>Select a surah to begin</p>
+            </div>
           )}
         </div>
       </div>

@@ -229,9 +229,11 @@ export const PageView: React.FC<PageViewProps> = ({
                 <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
                   Ayah {ayah.numberInSurah}
                 </span>
-                <span className="text-gray-500 text-sm">
-                  Surah {ayah.surah.number}
-                </span>
+                {ayah.surah && (
+                  <span className="text-gray-500 text-sm">
+                    Surah {ayah.surah.number}
+                  </span>
+                )}
               </div>
               <button
                 onClick={() => handleAyahClick(ayah.number)}
