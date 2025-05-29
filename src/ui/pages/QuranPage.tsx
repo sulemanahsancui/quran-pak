@@ -52,10 +52,16 @@ export const QuranPage: React.FC = () => {
     setLoadingAyahs(true);
     try {
       setSelectedPage(pageNumber);
-      const ayahs = await quranService.getPage(pageNumber);
-      setAyahs(ayahs);
+      const result = await quranService.getPage(pageNumber);
+      if (result && result.ayahs) {
+        setAyahs(result.ayahs);
+      } else {
+        console.error("No ayahs data received");
+        setAyahs([]);
+      }
     } catch (error) {
       console.error("Error loading page:", error);
+      setAyahs([]);
     } finally {
       setLoadingAyahs(false);
     }
