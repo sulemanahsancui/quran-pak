@@ -11,6 +11,10 @@ function createWindow() {
     webPreferences: {
       nodeIntegration: true,
       contextIsolation: false,
+      webSecurity: true,
+      allowRunningInsecureContent: false,
+      // Enable geolocation
+      enableBlinkFeatures: "Geolocation",
     },
   });
 
@@ -21,13 +25,40 @@ function createWindow() {
     mainWindow.loadFile(getUIPath());
   }
 
+  // Handle location permissions
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (webContents, permission, callback) => {
+      // Always allow geolocation
+      if (permission === "geolocation") {
+        console.log("Geolocation permission granted");
+        callback(true);
+        return;
+      }
+      // Deny other permissions
+      callback(false);
+    }
+  );
+
+  // Enable geolocation
+  mainWindow.webContents.session.setPermissionRequestHandler(
+    (webContents, permission, callback) => {
+      if (permission === "geolocation") {
+        callback(true);
+      } else {
+        callback(false);
+      }
+    }
+  );
+
   mainWindow.on("closed", () => {
     mainWindow = null;
   });
 }
 
+// Create window when app is ready
 app.whenReady().then(createWindow);
 
+// Quit when all windows are closed
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();

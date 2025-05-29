@@ -1,25 +1,18 @@
-import { useState } from "react";
 import "./App.css";
+import React from "react";
+import { QuranPage } from "./pages/QuranPage.tsx";
+import { PrayerTimesPage } from "./pages/PrayerTimesPage.tsx";
+import { IslamicCalendarPage } from "./pages/IslamicCalendarPage.tsx";
+import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 
-function App() {
-  const [count, setCount] = useState(0);
-
+export const App: React.FC = () => {
   return (
-    <div>
-      <h1>Vite + React</h1>
-      <div className="card">
-        <button onClick={() => setCount((count) => count + 1)}>
-          count is {count}
-        </button>
-        <p>
-          Edit <code>src/App.tsx</code> and save to test HMR
-        </p>
-      </div>
-      <p className="read-the-docs">
-        Click on the Vite and React
-      </p>
-    </div>
+    <Router>
+      <Routes>
+        <Route path="/" element={<QuranPage />} />
+        <Route path="/prayer-times" element={<PrayerTimesPage />} />
+        <Route path="/islamic-calendar" element={<IslamicCalendarPage />} />
+      </Routes>
+    </Router>
   );
-}
-
-export default App;
+};
