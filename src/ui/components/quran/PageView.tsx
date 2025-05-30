@@ -1,7 +1,6 @@
-import React, { useState, useRef, useEffect } from "react";
-import { Ayah } from "../../types/quran.ts";
+import React, { useEffect, useRef, useState } from "react";
 import { historyService } from "../../services/historyService.ts";
-import { quranService } from "../../services/quranService.ts";
+import { Ayah } from "../../types/quran.ts";
 
 interface PageViewProps {
   pageNumber: number;
@@ -26,7 +25,7 @@ export const PageView: React.FC<PageViewProps> = ({
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   useEffect(() => {
-    const progress = historyService.getLastProgress();
+    const progress:any = historyService.getLastProgress();
     if (progress?.lastPage) {
       setLastProgress({ page: progress.lastPage });
     }

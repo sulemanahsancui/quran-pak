@@ -1,6 +1,6 @@
 import { PrayerTimes } from "../types/quran.ts";
 import React, { useState, useEffect } from "react";
-import { Navigation } from "../components/Navigation.tsx";
+import { Navigation } from "../components/navigation.tsx";
 import { prayerService } from "../services/prayerService.ts";
 
 export const PrayerTimesPage: React.FC = () => {
@@ -67,17 +67,19 @@ export const PrayerTimesPage: React.FC = () => {
   }, []);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-background dark:bg-dark-background">
       <Navigation />
       <div className="max-w-7xl mx-auto px-4 py-8 mt-16">
-        <div className="bg-white rounded-xl shadow-md p-6">
+        <div className="bg-background-light dark:bg-dark-background-light rounded-xl shadow-md p-6">
           <div className="flex items-center justify-between mb-6">
-            <h1 className="text-2xl font-bold text-gray-800">Prayer Times</h1>
+            <h1 className="text-2xl font-bold text-text dark:text-dark-text">
+              Prayer Times
+            </h1>
             <button
               onClick={fetchData}
               disabled={loading}
-              className={`px-4 py-2 bg-green-500 text-white rounded-lg transition-colors ${
-                loading ? "opacity-50 cursor-not-allowed" : "hover:bg-green-600"
+              className={`px-4 py-2 bg-primary dark:bg-dark-primary text-white rounded-lg transition-colors ${
+                loading ? "opacity-50 cursor-not-allowed" : "hover:opacity-90"
               }`}
             >
               {loading ? "Loading..." : "Refresh"}
@@ -86,17 +88,17 @@ export const PrayerTimesPage: React.FC = () => {
 
           {loading && (
             <div className="flex justify-center items-center py-8">
-              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-green-500"></div>
+              <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-dark-primary"></div>
             </div>
           )}
 
           {error && (
             <div className="space-y-4">
-              <div className="bg-red-50 text-red-500 p-4 rounded-lg">
+              <div className="bg-red-50 dark:bg-red-900/20 text-red-500 dark:text-red-400 p-4 rounded-lg">
                 {error}
               </div>
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h3 className="text-lg font-semibold text-gray-800 mb-2">
+              <div className="bg-background dark:bg-dark-background p-4 rounded-lg">
+                <h3 className="text-lg font-semibold text-text dark:text-dark-text mb-2">
                   Manual Location
                 </h3>
                 <form
@@ -106,7 +108,7 @@ export const PrayerTimesPage: React.FC = () => {
                   <div>
                     <label
                       htmlFor="city"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-text dark:text-dark-text"
                     >
                       City
                     </label>
@@ -120,14 +122,14 @@ export const PrayerTimesPage: React.FC = () => {
                           city: e.target.value,
                         })
                       }
-                      className="mt-1 p-3 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                      className="mt-1 p-3 block w-full rounded-md border-gray-300 dark:border-gray-600 bg-background-light dark:bg-dark-background-light text-text dark:text-dark-text shadow-sm focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
                       placeholder="Enter city name"
                     />
                   </div>
                   <div>
                     <label
                       htmlFor="country"
-                      className="block text-sm font-medium text-gray-700"
+                      className="block text-sm font-medium text-text dark:text-dark-text"
                     >
                       Country
                     </label>
@@ -141,17 +143,17 @@ export const PrayerTimesPage: React.FC = () => {
                           country: e.target.value,
                         })
                       }
-                      className="mt-1 block p-3 w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500"
+                      className="mt-1 block p-3 w-full rounded-md border-gray-300 dark:border-gray-600 bg-background-light dark:bg-dark-background-light text-text dark:text-dark-text shadow-sm focus:border-primary dark:focus:border-dark-primary focus:ring-primary dark:focus:ring-dark-primary"
                       placeholder="Enter country name"
                     />
                   </div>
                   <button
                     type="submit"
                     disabled={loading}
-                    className={`w-full px-4 py-2 bg-green-500 text-white rounded-lg transition-colors ${
+                    className={`w-full px-4 py-2 bg-primary dark:bg-dark-primary text-white rounded-lg transition-colors ${
                       loading
                         ? "opacity-50 cursor-not-allowed"
-                        : "hover:bg-green-600"
+                        : "hover:opacity-90"
                     }`}
                   >
                     {loading ? "Loading..." : "Get Prayer Times"}
@@ -164,10 +166,10 @@ export const PrayerTimesPage: React.FC = () => {
           {location && prayerTimes && !loading && (
             <div>
               <div className="mb-6">
-                <h2 className="text-lg font-semibold text-gray-700 mb-2">
+                <h2 className="text-lg font-semibold text-text dark:text-dark-text mb-2">
                   Location
                 </h2>
-                <p className="text-gray-600">
+                <p className="text-text-dark dark:text-dark-text-dark">
                   {location?.city}, {location?.country}
                 </p>
               </div>
@@ -176,12 +178,14 @@ export const PrayerTimesPage: React.FC = () => {
                 {Object.entries(prayerTimes).map(([prayer, time]) => (
                   <div
                     key={prayer}
-                    className="bg-gray-50 rounded-lg p-4 text-center"
+                    className="bg-background dark:bg-dark-background rounded-lg p-4 text-center border border-gray-200 dark:border-gray-700"
                   >
-                    <h3 className="text-lg font-semibold text-gray-800 mb-1">
+                    <h3 className="text-lg font-semibold text-text dark:text-dark-text mb-1">
                       {prayer}
                     </h3>
-                    <p className="text-gray-600">{time}</p>
+                    <p className="text-text-dark dark:text-dark-text-dark">
+                      {time}
+                    </p>
                   </div>
                 ))}
               </div>

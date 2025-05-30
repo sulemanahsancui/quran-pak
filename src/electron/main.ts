@@ -21,6 +21,7 @@ function createWindow() {
       nodeIntegration: false,
       contextIsolation: true,
       preload: path.join(__dirname, "preload.js"),
+      sandbox: false,
     },
   });
 
@@ -29,7 +30,7 @@ function createWindow() {
 
   // Load the app
   if (process.env.NODE_ENV === "development") {
-    mainWindow.loadURL("http://localhost:5173");
+    mainWindow.loadURL("http://localhost:5123");
     mainWindow.webContents.openDevTools();
   } else {
     mainWindow.loadFile(path.join(__dirname, "../dist/index.html"));
@@ -53,7 +54,7 @@ function createWindow() {
   });
 }
 
-// Handle IPC events
+// // Handle IPC events
 ipcMain.on("update-last-position", (_event, page: number) => {
   trayManager?.updateLastPosition(page);
 });
