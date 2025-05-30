@@ -1,5 +1,6 @@
 import { EventEmitter } from "events";
-const player = require("play-sound")();
+import playSound from "play-sound";
+const player = playSound();
 
 export class MediaPlayer extends EventEmitter {
   private audioProcess: any = null;
@@ -7,14 +8,20 @@ export class MediaPlayer extends EventEmitter {
   play(url: string) {
     console.log("MediaPlayer: play called with", url);
     this.stop();
-    this.audioProcess = player.play(url, (err: any) => {
-      if (err) {
-        console.error("MediaPlayer: play error", err);
-        this.emit("error", err);
-      }
-      this.emit("ended");
-    });
-    this.emit("play");
+    try {
+      // Use player.play directly
+      this.audioProcess = player.play(url, (err: any) => {
+        if (err) {
+          console.error("MediaPlayer: play error", err);
+          // Do not emit an unhandled error, just log it
+          // this.emit("error", err);
+        }
+        this.emit("ended");
+      });
+      this.emit("play");
+    } catch (error) {
+      console.error("MediaPlayer: play exception", error);
+    }
   }
 
   pause() {
