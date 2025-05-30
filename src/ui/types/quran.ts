@@ -1,3 +1,13 @@
+export interface Bookmark {
+  id: string;
+  surahNumber: number;
+  surahName: string;
+  ayahNumber: number;
+  text: string;
+  timestamp: number;
+  note?: string;
+}
+
 export interface Surah {
   number: number;
   name: string;
@@ -10,15 +20,11 @@ export interface Surah {
 export interface Ayah {
   number: number;
   text: string;
-  translation: string;
-  numberInSurah: number;
+  surahNumber: number;
   juz: number;
-  manzil: number;
   page: number;
-  ruku: number;
-  hizbQuarter: number;
-  sajda: boolean;
-  surah: Surah;
+  sajdah?: boolean;
+  sajdahNumber?: number;
 }
 
 export interface QuranData {
