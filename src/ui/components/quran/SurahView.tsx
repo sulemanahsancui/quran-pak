@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Surah, Ayah } from "../../types/quran.ts";
 import { historyService } from "../../services/historyService.ts";
 import { quranService } from "../../services/quranService.ts";
+import { toast } from "react-hot-toast";
 
 interface SurahViewProps {
   surah: Surah | null;
@@ -24,9 +25,19 @@ export const SurahView: React.FC<SurahViewProps> = ({
     ayah: number;
   } | null>(null);
   const [currentWord, setCurrentWord] = useState<number | null>(null);
+  const [loadingStates, setLoadingStates] = useState<{
+    [key: string]: boolean;
+  }>({});
+  const [reciterName, setReciterName] = useState<string>("");
   const audioRef = useRef<HTMLAudioElement | null>(null);
   const wordRefs = useRef<Map<string, HTMLSpanElement>>(new Map());
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
+  const [bookmarkedAyahs, setBookmarkedAyahs] = useState<Set<number>>(
+    new Set()
+  );
+  const [successStates, setSuccessStates] = useState<{
+    [key: string]: boolean;
+  }>({});
 
   // Scroll to the current ayah
   const scrollToAyah = (ayahNumber: number) => {
@@ -40,10 +51,36 @@ export const SurahView: React.FC<SurahViewProps> = ({
   };
 
   useEffect(() => {
-    const progress = historyService.getLastProgress();
-    if (progress) {
-      setLastProgress({ surah: progress.lastSurah, ayah: progress.lastAyah });
-    }
+    const loadHistory = async () => {
+      try {
+        const progress = await window.electron?.history?.getLastProgress();
+        console.log("Loaded history:", progress);
+        if (progress) {
+          setLastProgress({
+            surah: progress.lastSurah,
+            ayah: progress.lastAyah,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading history:", error);
+      }
+    };
+    loadHistory();
+
+    // Subscribe to history updates
+    const unsubscribe = window.electron?.history?.onUpdated((newHistory) => {
+      console.log("History updated:", newHistory);
+      if (newHistory) {
+        setLastProgress({
+          surah: newHistory.lastSurah,
+          ayah: newHistory.lastAyah,
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {
@@ -67,6 +104,110 @@ export const SurahView: React.FC<SurahViewProps> = ({
       scrollToAyah(playingAyah);
     }
   }, [playingAyah]);
+
+  useEffect(() => {
+    const loadBookmarks = async () => {
+      try {
+        const bookmarks = await window.electron?.bookmarks?.getBySurah(
+          surah?.number
+        );
+        if (bookmarks) {
+          const bookmarkedNumbers = new Set(
+            bookmarks.map((bookmark) => bookmark.ayahNumber)
+          );
+          setBookmarkedAyahs(bookmarkedNumbers);
+        }
+      } catch (err) {
+        console.error("Error loading bookmarks:", err);
+      }
+    };
+
+    loadBookmarks();
+
+    // Set up event listeners for bookmark changes
+    const unsubscribeAdded = window.electron?.bookmarks?.onAdded((bookmark) => {
+      if (bookmark.surahNumber === surah?.number) {
+        setBookmarkedAyahs((prev) => new Set(prev).add(bookmark.ayahNumber));
+      }
+    });
+
+    const unsubscribeRemoved = window.electron?.bookmarks?.onRemoved((id) => {
+      // We need to check if this was a bookmark for an ayah in this surah
+      const bookmark = ayahs.find((ayah) => ayah.id === id);
+      if (bookmark) {
+        setBookmarkedAyahs((prev) => {
+          const next = new Set(prev);
+          next.delete(bookmark.number);
+          return next;
+        });
+      }
+    });
+
+    return () => {
+      unsubscribeAdded?.();
+      unsubscribeRemoved?.();
+    };
+  }, [surah?.number, ayahs]);
+
+  useEffect(() => {
+    const loadReciterName = async () => {
+      try {
+        const settings = await window.electron?.recitation?.getSettings();
+        if (settings?.reciter) {
+          setReciterName(settings.reciter.name);
+        }
+      } catch (err) {
+        console.error("Error loading reciter name:", err);
+      }
+    };
+
+    loadReciterName();
+  }, []);
+
+  // Add keyboard shortcuts
+  useEffect(() => {
+    const handleKeyPress = (event: KeyboardEvent) => {
+      if (!surah) return;
+
+      // Space to play/pause current ayah
+      if (event.code === "Space" && !event.repeat) {
+        event.preventDefault();
+        const currentAyah = ayahs.find((a) => a.number === playingAyah);
+        if (currentAyah) {
+          handlePlayAyah(currentAyah);
+        }
+      }
+
+      // B to toggle bookmark for current ayah
+      if (event.code === "KeyB" && !event.repeat) {
+        event.preventDefault();
+        const currentAyah = ayahs.find((a) => a.number === playingAyah);
+        if (currentAyah) {
+          handleBookmarkToggle(currentAyah);
+        }
+      }
+
+      // Arrow keys to navigate between ayahs
+      if (event.code === "ArrowDown" || event.code === "ArrowUp") {
+        event.preventDefault();
+        const currentIndex = ayahs.findIndex((a) => a.number === playingAyah);
+        if (currentIndex === -1) return;
+
+        const nextIndex =
+          event.code === "ArrowDown"
+            ? Math.min(currentIndex + 1, ayahs.length - 1)
+            : Math.max(currentIndex - 1, 0);
+
+        const nextAyah = ayahs[nextIndex];
+        if (nextAyah) {
+          handlePlayAyah(nextAyah);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyPress);
+    return () => window.removeEventListener("keydown", handleKeyPress);
+  }, [surah, ayahs, playingAyah]);
 
   const playNextAyah = async () => {
     if (currentAyahIndex >= ayahs.length) {
@@ -165,6 +306,84 @@ export const SurahView: React.FC<SurahViewProps> = ({
   const handleResumeReading = () => {
     if (lastProgress) {
       onSurahSelect(lastProgress.surah);
+    }
+  };
+
+  const setLoading = (key: string, isLoading: boolean) => {
+    setLoadingStates((prev) => ({
+      ...prev,
+      [key]: isLoading,
+    }));
+  };
+
+  const setSuccess = (key: string, isSuccess: boolean) => {
+    setSuccessStates((prev) => ({
+      ...prev,
+      [key]: isSuccess,
+    }));
+    // Reset success state after animation
+    setTimeout(() => {
+      setSuccessStates((prev) => ({
+        ...prev,
+        [key]: false,
+      }));
+    }, 1000);
+  };
+
+  const handleBookmarkToggle = async (ayah: Ayah) => {
+    const key = `bookmark-${ayah.number}`;
+    setLoading(key, true);
+    try {
+      if (bookmarkedAyahs.has(ayah.number)) {
+        // Find the bookmark ID for this ayah
+        const bookmarks = await window.electron?.bookmarks?.getBySurah(
+          surah?.number
+        );
+        const bookmark = bookmarks?.find((b) => b.ayahNumber === ayah.number);
+        if (bookmark) {
+          await window.electron?.bookmarks?.remove(bookmark.id);
+          setBookmarkedAyahs((prev) => {
+            const next = new Set(prev);
+            next.delete(ayah.number);
+            return next;
+          });
+          toast.success("Bookmark removed");
+        }
+      } else {
+        const bookmark = {
+          surahNumber: surah?.number,
+          surahName: surah?.name,
+          ayahNumber: ayah.number,
+          text: ayah.text,
+        };
+        await window.electron?.bookmarks?.add(bookmark);
+        setBookmarkedAyahs((prev) => new Set(prev).add(ayah.number));
+        toast.success("Bookmark added");
+      }
+      setSuccess(key, true);
+    } catch (err) {
+      console.error("Error toggling bookmark:", err);
+      toast.error("Failed to update bookmark");
+    } finally {
+      setLoading(key, false);
+    }
+  };
+
+  const handlePlayAyah = async (ayah: Ayah) => {
+    const key = `play-${ayah.number}`;
+    setLoading(key, true);
+    try {
+      if (!surah?.number) {
+        throw new Error("Surah number is required");
+      }
+      await window.electron?.recitation?.playAyah(surah.number, ayah.number);
+      setSuccess(key, true);
+      toast.success("Playing recitation");
+    } catch (err) {
+      console.error("Error playing ayah:", err);
+      toast.error("Failed to play recitation");
+    } finally {
+      setLoading(key, false);
     }
   };
 
@@ -323,19 +542,106 @@ export const SurahView: React.FC<SurahViewProps> = ({
                     <span className="bg-primary/10 dark:bg-dark-primary/10 text-primary dark:text-dark-primary px-3 py-1 rounded-full text-sm font-medium">
                       Ayah {ayah.numberInSurah}
                     </span>
+                    <span className="text-xs text-gray-500 dark:text-gray-400">
+                      Press Space to play • B to bookmark • ↑↓ to navigate
+                    </span>
                   </div>
-                  <button
-                    onClick={() =>
-                      handleAyahClick(ayah.number, ayah.numberInSurah)
-                    }
-                    className="p-2 text-primary dark:text-dark-primary hover:text-primary-dark dark:hover:text-dark-primary-dark transition-colors"
-                  >
-                    {playingAyah === ayah.number ? (
-                      <span className="text-2xl">⏸️</span>
-                    ) : (
-                      <span className="text-2xl">▶️</span>
-                    )}
-                  </button>
+                  <div className="flex space-x-2">
+                    <button
+                      onClick={() => handlePlayAyah(ayah)}
+                      disabled={loadingStates[`play-${ayah.number}`]}
+                      className={`p-2 text-gray-600 dark:text-gray-300 hover:text-blue-500 dark:hover:text-blue-400 transition-colors relative group ${
+                        loadingStates[`play-${ayah.number}`]
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      } ${
+                        successStates[`play-${ayah.number}`]
+                          ? "animate-pulse"
+                          : ""
+                      }`}
+                      title={`Play recitation${
+                        reciterName ? ` (${reciterName})` : ""
+                      }`}
+                    >
+                      {loadingStates[`play-${ayah.number}`] ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-blue-500"></div>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"
+                          />
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"
+                          />
+                        </svg>
+                      )}
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity whitespace-nowrap">
+                        {reciterName
+                          ? `Play (${reciterName})`
+                          : "Play recitation"}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => handleBookmarkToggle(ayah)}
+                      disabled={loadingStates[`bookmark-${ayah.number}`]}
+                      className={`p-2 transition-colors relative group ${
+                        bookmarkedAyahs.has(ayah.number)
+                          ? "text-yellow-500 hover:text-yellow-600"
+                          : "text-gray-600 dark:text-gray-300 hover:text-yellow-500 dark:hover:text-yellow-400"
+                      } ${
+                        loadingStates[`bookmark-${ayah.number}`]
+                          ? "opacity-50 cursor-not-allowed"
+                          : ""
+                      } ${
+                        successStates[`bookmark-${ayah.number}`]
+                          ? "animate-bounce"
+                          : ""
+                      }`}
+                      title={
+                        bookmarkedAyahs.has(ayah.number)
+                          ? "Remove bookmark"
+                          : "Add bookmark"
+                      }
+                    >
+                      {loadingStates[`bookmark-${ayah.number}`] ? (
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-yellow-500"></div>
+                      ) : (
+                        <svg
+                          className="w-5 h-5"
+                          fill={
+                            bookmarkedAyahs.has(ayah.number)
+                              ? "currentColor"
+                              : "none"
+                          }
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M5 5a2 2 0 012-2h10a2 2 0 012 2v16l-7-3.5L5 21V5z"
+                          />
+                        </svg>
+                      )}
+                      <span className="absolute bottom-full left-1/2 transform -translate-x-1/2 mb-2 px-2 py-1 bg-gray-800 text-white text-xs rounded opacity-0 group-hover:opacity-100 transition-opacity">
+                        {bookmarkedAyahs.has(ayah.number)
+                          ? "Remove bookmark"
+                          : "Add bookmark"}
+                      </span>
+                    </button>
+                  </div>
                 </div>
                 <div className="text-3xl mb-4 font-arabic leading-loose text-text dark:text-dark-text">
                   {renderAyahText(ayah.text, ayah.number, ayah.numberInSurah)}

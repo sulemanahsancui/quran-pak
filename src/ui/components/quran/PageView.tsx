@@ -1,6 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { historyService } from "../../services/historyService.ts";
-import { Ayah } from "../../types/quran.ts";
+import { Ayah } from "../../types/quran";
 
 interface PageViewProps {
   pageNumber: number;
@@ -25,11 +24,57 @@ export const PageView: React.FC<PageViewProps> = ({
   const ayahRefs = useRef<Map<number, HTMLDivElement>>(new Map());
 
   useEffect(() => {
-    const progress:any = historyService.getLastProgress();
-    if (progress?.lastPage) {
-      setLastProgress({ page: progress.lastPage });
-    }
+    const loadLastProgress = async () => {
+      try {
+        console.log("Loading last progress...");
+        const progress = await window.electron?.history?.getLastProgress();
+        console.log("Loaded progress:", progress);
+        if (progress?.lastPage) {
+          setLastProgress({ page: progress.lastPage });
+          // If we're on page 1 and have history, navigate to the last page
+          if (pageNumber === 1) {
+            onPageChange(progress.lastPage);
+          }
+        }
+      } catch (error) {
+        console.error("Error loading progress:", error);
+      }
+    };
+    loadLastProgress();
+
+    // Subscribe to history updates
+    const unsubscribe = window.electron?.history?.onUpdated((history) => {
+      console.log("History updated:", history);
+      if (history?.lastPage) {
+        setLastProgress({ page: history.lastPage });
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
+
+  useEffect(() => {
+    // Save progress when page changes
+    if (ayahs.length > 0 && pageNumber > 0) {
+      const surahNumber = ayahs[0]?.surah?.number;
+      const ayahNumber = ayahs[0]?.number;
+
+      if (surahNumber && ayahNumber) {
+        console.log("Saving progress:", {
+          surahNumber,
+          ayahNumber,
+          pageNumber,
+        });
+        window.electron?.history?.saveProgress(
+          surahNumber,
+          ayahNumber,
+          pageNumber
+        );
+      }
+    }
+  }, [pageNumber, ayahs]);
 
   useEffect(() => {
     return () => {
@@ -54,58 +99,41 @@ export const PageView: React.FC<PageViewProps> = ({
   }, [playingAyah]);
 
   const playAyah = async (ayahNumber: number) => {
-    if (audioRef.current) {
-      audioRef.current.pause();
-      audioRef.current.currentTime = 0;
-    }
-
     if (playingAyah === ayahNumber) {
+      await window.electron?.recitation?.pause();
       setPlayingAyah(null);
       setCurrentWord(null);
       return;
     }
 
-    const newAudio = new Audio(
-      `https://cdn.islamic.network/quran/audio/128/ar.alafasy/${ayahNumber}.mp3`
-    );
-    audioRef.current = newAudio;
-    setPlayingAyah(ayahNumber);
-    setCurrentWord(0);
-
-    newAudio.addEventListener("timeupdate", () => handleTimeUpdate(ayahNumber));
-    newAudio.addEventListener("ended", () => {
-      setPlayingAyah(null);
-      setCurrentWord(null);
-    });
-
     try {
-      await newAudio.play();
+      const surahNumber = ayahs.find((a) => a.number === ayahNumber)?.surah
+        ?.number;
+      if (!surahNumber) return;
+
+      await window.electron?.recitation?.playAyah(surahNumber, ayahNumber);
+      setPlayingAyah(ayahNumber);
+      setCurrentWord(0);
+
+      // Subscribe to recitation events
+      const unsubscribe = window.electron?.recitation?.onSettingsUpdated(
+        (settings) => {
+          if (!settings.isPlaying) {
+            setPlayingAyah(null);
+            setCurrentWord(null);
+          }
+        }
+      );
+
+      return () => unsubscribe?.();
     } catch (error) {
-      console.error("Error playing audio:", error);
+      console.error("Error playing ayah:", error);
       setPlayingAyah(null);
       setCurrentWord(null);
-    }
-  };
-
-  const handleTimeUpdate = (ayahNumber: number) => {
-    if (!audioRef.current) return;
-
-    const currentTime = audioRef.current.currentTime;
-    const ayah = ayahs.find((a) => a.number === ayahNumber);
-    if (!ayah) return;
-
-    const words = ayah.text.split(/\s+/);
-    const totalDuration = audioRef.current.duration;
-    const wordDuration = totalDuration / words.length;
-    const currentWordIndex = Math.floor(currentTime / wordDuration);
-
-    if (currentWordIndex !== currentWord && currentWordIndex < words.length) {
-      setCurrentWord(currentWordIndex);
     }
   };
 
   const handleAyahClick = (ayahNumber: number) => {
-    historyService.saveProgress(null, null, pageNumber);
     playAyah(ayahNumber);
   };
 

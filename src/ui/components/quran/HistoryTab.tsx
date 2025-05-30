@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import { historyService } from "../../services/historyService.ts";
 
 interface HistoryTabProps {
   onSurahSelect: (surahNumber: number) => void;
@@ -8,6 +7,7 @@ interface HistoryTabProps {
 interface ReadingHistory {
   lastSurah: number;
   lastAyah: number;
+  lastPage: number;
   timestamp: number;
 }
 
@@ -15,8 +15,26 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ onSurahSelect }) => {
   const [history, setHistory] = useState<ReadingHistory | null>(null);
 
   useEffect(() => {
-    const lastProgress = historyService.getLastProgress();
-    setHistory(lastProgress);
+    const loadHistory = async () => {
+      try {
+        const progress = await window.electron?.history?.getLastProgress();
+        console.log("Loaded history:", progress);
+        setHistory(progress);
+      } catch (error) {
+        console.error("Error loading history:", error);
+      }
+    };
+    loadHistory();
+
+    // Subscribe to history updates
+    const unsubscribe = window.electron?.history?.onUpdated((newHistory) => {
+      console.log("History updated:", newHistory);
+      setHistory(newHistory);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   const getTimeAgo = (timestamp: number) => {
@@ -43,9 +61,13 @@ export const HistoryTab: React.FC<HistoryTabProps> = ({ onSurahSelect }) => {
     return `${years}y ago`;
   };
 
-  const handleClearHistory = () => {
-    historyService.clearHistory();
-    setHistory(null);
+  const handleClearHistory = async () => {
+    try {
+      await window.electron?.history?.clearHistory();
+      setHistory(null);
+    } catch (error) {
+      console.error("Error clearing history:", error);
+    }
   };
 
   if (!history) {
