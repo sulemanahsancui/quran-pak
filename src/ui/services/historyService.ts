@@ -17,7 +17,9 @@ class HistoryService {
   }
 
   getLastProgress(): ReadingHistory | null {
+    console.log("Key", this.HISTORY_KEY);
     const history = localStorage.getItem(this.HISTORY_KEY);
+    console.log({ history });
     if (!history) return null;
     return JSON.parse(history) as ReadingHistory;
   }

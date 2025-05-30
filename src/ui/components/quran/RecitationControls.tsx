@@ -200,11 +200,23 @@ const RecitationControls: React.FC = () => {
             htmlFor="autoPlay"
             className="ml-2 block text-sm text-gray-700 dark:text-gray-300"
           >
-            Auto-play next ayah
+            Auto Play
           </label>
         </div>
 
         <div className="flex space-x-2 mt-4">
+          <button
+            onClick={() => window.electron.recitation.playAyah(1, 1)}
+            className="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors"
+          >
+            Play Ayah 1:1
+          </button>
+          <button
+            onClick={() => window.electron.recitation.playSurah(1)}
+            className="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors"
+          >
+            Play Surah 1
+          </button>
           <button
             onClick={handlePlay}
             className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"

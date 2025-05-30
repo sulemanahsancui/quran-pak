@@ -2,6 +2,7 @@ import { app, BrowserWindow } from "electron";
 import fs from "fs";
 import path from "path";
 import { fileURLToPath } from "url";
+import { MediaPlayer } from "./mediaPlayer.js";
 
 // ES module compatible __dirname
 const __filename = fileURLToPath(import.meta.url);
@@ -20,12 +21,14 @@ interface RecitationSettings {
   repeatCount: number;
   volume: number;
   playbackSpeed: number;
+  isPlaying: boolean;
 }
 
 class RecitationManager {
   private mainWindow: BrowserWindow;
   private settingsPath: string;
   private settings: RecitationSettings;
+  private mediaPlayer: MediaPlayer;
   private reciters: Reciter[] = [
     {
       id: "mishary_rashid_alafasy",
@@ -55,6 +58,27 @@ class RecitationManager {
       "recitation-settings.json"
     );
     this.settings = this.loadSettings();
+    this.mediaPlayer = new MediaPlayer();
+
+    // Set up media player event handlers
+    this.mediaPlayer.on("play", () => {
+      this.settings.isPlaying = true;
+      this.updateSettings({ isPlaying: true });
+    });
+
+    this.mediaPlayer.on("pause", () => {
+      this.settings.isPlaying = false;
+      this.updateSettings({ isPlaying: false });
+    });
+
+    this.mediaPlayer.on("ended", () => {
+      this.settings.isPlaying = false;
+      this.updateSettings({ isPlaying: false });
+    });
+
+    // Apply initial settings
+    this.mediaPlayer.setVolume(this.settings.volume);
+    this.mediaPlayer.setPlaybackRate(this.settings.playbackSpeed);
   }
 
   private loadSettings(): RecitationSettings {
@@ -74,6 +98,7 @@ class RecitationManager {
       repeatCount: 1,
       volume: 1.0,
       playbackSpeed: 1.0,
+      isPlaying: false,
     };
   }
 
@@ -95,6 +120,15 @@ class RecitationManager {
   updateSettings(newSettings: Partial<RecitationSettings>) {
     this.settings = { ...this.settings, ...newSettings };
     this.saveSettings();
+
+    // Apply settings to media player
+    if (newSettings.volume !== undefined) {
+      this.mediaPlayer.setVolume(newSettings.volume);
+    }
+    if (newSettings.playbackSpeed !== undefined) {
+      this.mediaPlayer.setPlaybackRate(newSettings.playbackSpeed);
+    }
+
     this.mainWindow.webContents.send(
       "recitation-settings-updated",
       this.settings
@@ -114,33 +148,38 @@ class RecitationManager {
 
   playAyah(surahNumber: number, ayahNumber: number) {
     const reciter = this.getCurrentReciter();
-    this.mainWindow.webContents.send("play-ayah", {
+    const audioUrl = `https://cdn.islamic.network/quran/audio/128/${reciter.id}/${ayahNumber}.mp3`;
+    console.log("RecitationManager: playAyah called with", {
       surahNumber,
       ayahNumber,
-      reciter: reciter.id,
-      settings: this.settings,
+      audioUrl,
     });
+    this.mediaPlayer.play(audioUrl);
   }
 
   playSurah(surahNumber: number) {
     const reciter = this.getCurrentReciter();
-    this.mainWindow.webContents.send("play-surah", {
+    const audioUrl = `https://cdn.islamic.network/quran/audio/128/${reciter.id}/${surahNumber}.mp3`;
+    console.log("RecitationManager: playSurah called with", {
       surahNumber,
-      reciter: reciter.id,
-      settings: this.settings,
+      audioUrl,
     });
+    this.mediaPlayer.play(audioUrl);
   }
 
   pausePlayback() {
-    this.mainWindow.webContents.send("pause-playback");
+    console.log("RecitationManager: pausePlayback called");
+    this.mediaPlayer.pause();
   }
 
   resumePlayback() {
-    this.mainWindow.webContents.send("resume-playback");
+    console.log("RecitationManager: resumePlayback called");
+    this.mediaPlayer.resume();
   }
 
   stopPlayback() {
-    this.mainWindow.webContents.send("stop-playback");
+    console.log("RecitationManager: stopPlayback called");
+    this.mediaPlayer.stop();
   }
 
   setVolume(volume: number) {

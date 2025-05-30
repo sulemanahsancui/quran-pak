@@ -108,29 +108,27 @@ contextBridge.exposeInMainWorld("electron", {
   },
 
   history: {
-    getLastProgress: () => ipcRenderer.invoke("get-reading-history"),
+    getLastProgress: () => ipcRenderer.invoke("get-last-progress"),
     saveProgress: (
       surahNumber: number,
       ayahNumber: number,
       pageNumber: number
     ) =>
-      ipcRenderer.send("save-reading-progress", {
+      ipcRenderer.send("save-progress", {
         surahNumber,
         ayahNumber,
         pageNumber,
       }),
-    clearHistory: () => ipcRenderer.send("clear-reading-history"),
+    clearHistory: () => ipcRenderer.send("clear-history"),
     onUpdated: (callback: (history: any) => void) => {
       const handler = (_event: any, history: any) => callback(history);
-      ipcRenderer.on("reading-history-updated", handler);
-      return () =>
-        ipcRenderer.removeListener("reading-history-updated", handler);
+      ipcRenderer.on("history-updated", handler);
+      return () => ipcRenderer.removeListener("history-updated", handler);
     },
     onCleared: (callback: () => void) => {
       const handler = () => callback();
-      ipcRenderer.on("reading-history-cleared", handler);
-      return () =>
-        ipcRenderer.removeListener("reading-history-cleared", handler);
+      ipcRenderer.on("history-cleared", handler);
+      return () => ipcRenderer.removeListener("history-cleared", handler);
     },
   },
 

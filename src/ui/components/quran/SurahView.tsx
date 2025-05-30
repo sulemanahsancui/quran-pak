@@ -51,10 +51,36 @@ export const SurahView: React.FC<SurahViewProps> = ({
   };
 
   useEffect(() => {
-    const progress = historyService.getLastProgress();
-    if (progress) {
-      setLastProgress({ surah: progress.lastSurah, ayah: progress.lastAyah });
-    }
+    const loadHistory = async () => {
+      try {
+        const progress = await window.electron?.history?.getLastProgress();
+        console.log("Loaded history:", progress);
+        if (progress) {
+          setLastProgress({
+            surah: progress.lastSurah,
+            ayah: progress.lastAyah,
+          });
+        }
+      } catch (error) {
+        console.error("Error loading history:", error);
+      }
+    };
+    loadHistory();
+
+    // Subscribe to history updates
+    const unsubscribe = window.electron?.history?.onUpdated((newHistory) => {
+      console.log("History updated:", newHistory);
+      if (newHistory) {
+        setLastProgress({
+          surah: newHistory.lastSurah,
+          ayah: newHistory.lastAyah,
+        });
+      }
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
   }, []);
 
   useEffect(() => {

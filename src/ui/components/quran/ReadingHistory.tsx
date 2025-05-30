@@ -1,14 +1,43 @@
-import React from "react";
-import { historyService } from "../../services/historyService.ts";
+import React, { useState, useEffect } from "react";
 
 interface ReadingHistoryProps {
   onSurahSelect: (surahNumber: number) => void;
 }
 
+interface ReadingHistory {
+  lastSurah: number;
+  lastAyah: number;
+  lastPage: number;
+  timestamp: number;
+}
+
 export const ReadingHistory: React.FC<ReadingHistoryProps> = ({
   onSurahSelect,
 }) => {
-  const lastProgress = historyService.getLastProgress();
+  const [lastProgress, setLastProgress] = useState<ReadingHistory | null>(null);
+
+  useEffect(() => {
+    const loadHistory = async () => {
+      try {
+        const progress = await window.electron?.history?.getLastProgress();
+        console.log("Loaded history:", progress);
+        setLastProgress(progress);
+      } catch (error) {
+        console.error("Error loading history:", error);
+      }
+    };
+    loadHistory();
+
+    // Subscribe to history updates
+    const unsubscribe = window.electron?.history?.onUpdated((newHistory) => {
+      console.log("History updated:", newHistory);
+      setLastProgress(newHistory);
+    });
+
+    return () => {
+      unsubscribe?.();
+    };
+  }, []);
 
   if (!lastProgress) {
     return null;
