@@ -1,5 +1,6 @@
 import React from "react";
 import { Link, useLocation } from "react-router-dom";
+import { ThemeToggle } from "./ThemeToggle.tsx";
 
 export const Navigation: React.FC = () => {
   const location = useLocation();
@@ -9,7 +10,7 @@ export const Navigation: React.FC = () => {
   };
 
   return (
-    <nav className="fixed top-0 left-0 right-0 bg-white shadow-md z-50">
+    <nav className="fixed top-0 left-0 right-0 bg-background-light dark:bg-dark-background-light shadow-md z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between items-center h-16">
           <div className="flex items-center">
@@ -19,18 +20,18 @@ export const Navigation: React.FC = () => {
                 alt="Quran App Logo"
                 className="h-8 w-8 mr-2"
               />
-              <span className="text-xl font-bold text-green-600">
+              <span className="text-xl font-bold text-primary dark:text-dark-primary">
                 Quran App
               </span>
             </Link>
           </div>
-          <div className="flex space-x-4">
+          <div className="flex items-center space-x-4">
             <Link
               to="/"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive("/")
-                  ? "text-green-600 bg-green-50"
-                  : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  ? "text-primary dark:text-dark-primary bg-background dark:bg-dark-background"
+                  : "text-text dark:text-dark-text hover:text-primary dark:hover:text-dark-primary hover:bg-background dark:hover:bg-dark-background"
               }`}
             >
               Home
@@ -39,8 +40,8 @@ export const Navigation: React.FC = () => {
               to="/quran"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive("/quran")
-                  ? "text-green-600 bg-green-50"
-                  : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  ? "text-primary dark:text-dark-primary bg-background dark:bg-dark-background"
+                  : "text-text dark:text-dark-text hover:text-primary dark:hover:text-dark-primary hover:bg-background dark:hover:bg-dark-background"
               }`}
             >
               Quran
@@ -49,8 +50,8 @@ export const Navigation: React.FC = () => {
               to="/prayer-times"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive("/prayer-times")
-                  ? "text-green-600 bg-green-50"
-                  : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  ? "text-primary dark:text-dark-primary bg-background dark:bg-dark-background"
+                  : "text-text dark:text-dark-text hover:text-primary dark:hover:text-dark-primary hover:bg-background dark:hover:bg-dark-background"
               }`}
             >
               Prayer Times
@@ -59,12 +60,15 @@ export const Navigation: React.FC = () => {
               to="/islamic-calendar"
               className={`px-3 py-2 rounded-md text-sm font-medium transition-colors ${
                 isActive("/islamic-calendar")
-                  ? "text-green-600 bg-green-50"
-                  : "text-gray-600 hover:text-green-600 hover:bg-green-50"
+                  ? "text-primary dark:text-dark-primary bg-background dark:bg-dark-background"
+                  : "text-text dark:text-dark-text hover:text-primary dark:hover:text-dark-primary hover:bg-background dark:hover:bg-dark-background"
               }`}
             >
               Islamic Calendar
             </Link>
+            <div className="ml-4">
+              <ThemeToggle />
+            </div>
           </div>
         </div>
       </div>

@@ -1,4 +1,11 @@
-import { app, Tray, Menu, BrowserWindow, globalShortcut } from "electron";
+import {
+  app,
+  Tray,
+  Menu,
+  BrowserWindow,
+  globalShortcut,
+  nativeImage,
+} from "electron";
 import path from "path";
 import { fileURLToPath } from "url";
 
@@ -17,9 +24,15 @@ class TrayManager {
   }
 
   private createTray() {
-    // Create tray icon
+    // Create tray icon with proper sizing
     const iconPath = path.join(process.cwd(), "src/assets/tray-icon.png");
-    this.tray = new Tray(iconPath);
+    const image = nativeImage.createFromPath(iconPath);
+
+    // Resize image based on platform
+    const size = process.platform === "darwin" ? 16 : 32; // macOS uses smaller icons
+    const resizedImage = image.resize({ width: size, height: size });
+
+    this.tray = new Tray(resizedImage);
 
     // Create context menu
     const contextMenu = Menu.buildFromTemplate([

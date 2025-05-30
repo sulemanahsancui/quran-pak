@@ -200,8 +200,8 @@ export const SurahView: React.FC<SurahViewProps> = ({
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center min-h-[400px]">
-        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-green-500"></div>
+      <div className="flex justify-center items-center h-full">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary dark:border-dark-primary"></div>
       </div>
     );
   }
@@ -237,79 +237,116 @@ export const SurahView: React.FC<SurahViewProps> = ({
   }
 
   return (
-    <div className="max-w-4xl mx-auto p-6">
-      <div className="bg-white rounded-xl shadow-lg p-6 mb-8">
-        <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6">
-          <div>
-            <h2 className="text-4xl font-bold mb-2 text-gray-800">
-              {surah.englishName}
-            </h2>
-            <p className="text-xl text-gray-600 mb-1">
-              {surah.englishNameTranslation}
-            </p>
-            <div className="flex items-center gap-4 text-sm text-gray-500">
-              <span>Number of Ayahs: {surah.numberOfAyahs}</span>
-              <span>•</span>
-              <span>Revelation Type: {surah.revelationType}</span>
+    <div className="h-full flex flex-col">
+      <div className="sticky top-0 z-20 bg-background dark:bg-dark-background border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-4xl mx-auto">
+          <div className="p-6">
+            <div className="flex items-center justify-between mb-4">
+              <div>
+                <h1 className="text-3xl font-bold text-text dark:text-dark-text mb-2">
+                  {surah.englishName}
+                </h1>
+                <p className="text-text-dark dark:text-dark-text-dark">
+                  {surah.englishNameTranslation}
+                </p>
+              </div>
+              <div className="text-right">
+                <p className="text-text-dark dark:text-dark-text-dark">
+                  {surah.revelationType === "Meccan" ? "Meccan" : "Medinan"} •{" "}
+                  {surah.numberOfAyahs} Verses
+                </p>
+              </div>
             </div>
-          </div>
-          <div className="flex gap-3">
-            <button
-              onClick={togglePlayFullSurah}
-              className="px-6 py-3 bg-green-500 text-white rounded-lg hover:bg-green-600 transition-all transform hover:scale-105 flex items-center gap-2 shadow-md"
-            >
-              {isPlayingFullSurah ? (
-                <>
-                  <span className="text-xl">⏸️</span>
-                  <span>Pause Surah</span>
-                </>
-              ) : (
-                <>
-                  <span className="text-xl">▶️</span>
-                  <span>Play Full Surah</span>
-                </>
-              )}
-            </button>
           </div>
         </div>
       </div>
 
-      <div className="space-y-6">
-        {ayahs.map((ayah) => (
-          <div
-            key={ayah.number}
-            ref={(el) => {
-              if (el) ayahRefs.current.set(ayah.number, el);
-            }}
-            className={`bg-white rounded-xl shadow-md hover:shadow-lg transition-all p-6 ${
-              playingAyah === ayah.number
-                ? "ring-2 ring-green-500 transform scale-[1.02]"
-                : ""
-            }`}
-          >
-            <div className="flex justify-between items-start mb-4">
-              <div className="flex items-center gap-2">
-                <span className="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm font-medium">
-                  Ayah {ayah.numberInSurah}
-                </span>
+      <div className="sticky top-[120px] z-10 bg-background dark:bg-dark-background border-b border-gray-200 dark:border-gray-700">
+        <div className="max-w-4xl mx-auto">
+          <div className="p-6">
+            <div className="bg-white dark:bg-dark-background-light rounded-xl shadow-lg p-6">
+              <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                <div>
+                  <h2 className="text-4xl font-bold mb-2 text-text dark:text-dark-text">
+                    {surah.englishName}
+                  </h2>
+                  <p className="text-xl text-text-dark dark:text-dark-text-dark mb-1">
+                    {surah.englishNameTranslation}
+                  </p>
+                  <div className="flex items-center gap-4 text-sm text-text-dark dark:text-dark-text-dark">
+                    <span>Number of Ayahs: {surah.numberOfAyahs}</span>
+                    <span>•</span>
+                    <span>Revelation Type: {surah.revelationType}</span>
+                  </div>
+                </div>
+                <div className="flex gap-3">
+                  <button
+                    onClick={togglePlayFullSurah}
+                    className="px-6 py-3 bg-primary dark:bg-dark-primary text-white rounded-lg hover:bg-primary-dark dark:hover:bg-dark-primary-dark transition-all transform hover:scale-105 flex items-center gap-2 shadow-md"
+                  >
+                    {isPlayingFullSurah ? (
+                      <>
+                        <span className="text-xl">⏸️</span>
+                        <span>Pause Surah</span>
+                      </>
+                    ) : (
+                      <>
+                        <span className="text-xl">▶️</span>
+                        <span>Play Full Surah</span>
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
-              <button
-                onClick={() => handleAyahClick(ayah.number, ayah.numberInSurah)}
-                className="p-2 text-green-500 hover:text-green-600 transition-colors"
-              >
-                {playingAyah === ayah.number ? (
-                  <span className="text-2xl">⏸️</span>
-                ) : (
-                  <span className="text-2xl">▶️</span>
-                )}
-              </button>
             </div>
-            <div className="text-3xl mb-4 font-arabic leading-loose">
-              {renderAyahText(ayah.text, ayah.number, ayah.numberInSurah)}
-            </div>
-            <div className="text-gray-600 mt-4">{ayah.translation}</div>
           </div>
-        ))}
+        </div>
+      </div>
+
+      <div className="flex-1 overflow-y-auto">
+        <div className="max-w-4xl mx-auto p-6">
+          <div className="space-y-6">
+            {ayahs.map((ayah) => (
+              <div
+                key={ayah.number}
+                ref={(el) => {
+                  if (el) ayahRefs.current.set(ayah.number, el);
+                }}
+                className={`bg-white dark:bg-dark-background-light rounded-xl shadow-md hover:shadow-lg transition-all p-6 ${
+                  playingAyah === ayah.number
+                    ? "ring-2 ring-primary dark:ring-dark-primary transform scale-[1.02]"
+                    : ""
+                }`}
+              >
+                <div className="flex justify-between items-start mb-4">
+                  <div className="flex items-center gap-2">
+                    <span className="bg-primary/10 dark:bg-dark-primary/10 text-primary dark:text-dark-primary px-3 py-1 rounded-full text-sm font-medium">
+                      Ayah {ayah.numberInSurah}
+                    </span>
+                  </div>
+                  <button
+                    onClick={() =>
+                      handleAyahClick(ayah.number, ayah.numberInSurah)
+                    }
+                    className="p-2 text-primary dark:text-dark-primary hover:text-primary-dark dark:hover:text-dark-primary-dark transition-colors"
+                  >
+                    {playingAyah === ayah.number ? (
+                      <span className="text-2xl">⏸️</span>
+                    ) : (
+                      <span className="text-2xl">▶️</span>
+                    )}
+                  </button>
+                </div>
+                <div className="text-3xl mb-4 font-arabic leading-loose text-text dark:text-dark-text">
+                  {renderAyahText(ayah.text, ayah.number, ayah.numberInSurah)}
+                </div>
+                <div className="text-text-dark dark:text-dark-text-dark mt-4">
+                  {ayah.translation}
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );

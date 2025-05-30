@@ -131,4 +131,28 @@ export const quranService = {
       return null;
     }
   },
+
+  async searchAyahs(query: string): Promise<Ayah[]> {
+    try {
+      // First, get all surahs to search through
+      const surahs = await this.getAllSurahs();
+      const results: Ayah[] = [];
+
+      // Search through each surah
+      for (const surah of surahs) {
+        const surahData = await this.getSurahByNumber(surah.number);
+        if (surahData) {
+          const matchingAyahs = surahData.ayahs.filter((ayah) =>
+            ayah.text.toLowerCase().includes(query.toLowerCase())
+          );
+          results.push(...matchingAyahs);
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error("Error searching ayahs:", error);
+      throw error;
+    }
+  },
 };
