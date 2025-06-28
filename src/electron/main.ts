@@ -232,6 +232,40 @@ function createWindow() {
     recitationManager?.setPlaybackSpeed(speed);
   });
 
+  // History handlers
+  ipcMain.handle("get-reading-history", async () => {
+    console.log("Getting reading history");
+    const history = historyManager?.getLastProgress();
+    console.log("History retrieved:", history);
+    return history;
+  });
+
+  ipcMain.handle("get-last-progress", async () => {
+    console.log("Getting last progress");
+    const history = historyManager?.getLastProgress();
+    console.log("Last progress retrieved:", history);
+    return history;
+  });
+
+  ipcMain.on(
+    "save-reading-progress",
+    (_, { surahNumber, ayahNumber, pageNumber }) => {
+      console.log("Saving reading progress:", {
+        surahNumber,
+        ayahNumber,
+        pageNumber,
+      });
+      if (historyManager) {
+        historyManager.saveProgress(surahNumber, ayahNumber, pageNumber);
+      }
+    }
+  );
+
+  ipcMain.on("clear-reading-history", () => {
+    console.log("Clearing reading history");
+    historyManager?.clearHistory();
+  });
+
   // Translation handlers
   ipcMain.handle("get-translation-settings", () => {
     return translationManager?.getSettings();
@@ -275,33 +309,6 @@ function createWindow() {
 
   ipcMain.on("set-line-spacing", (_, spacing) => {
     translationManager?.setLineSpacing(spacing);
-  });
-
-  // History handlers
-  ipcMain.handle("get-reading-history", async () => {
-    console.log("Getting reading history");
-    const history = historyManager?.getLastProgress();
-    console.log("History retrieved:", history);
-    return history;
-  });
-
-  ipcMain.on(
-    "save-reading-progress",
-    (_, { surahNumber, ayahNumber, pageNumber }) => {
-      console.log("Saving reading progress:", {
-        surahNumber,
-        ayahNumber,
-        pageNumber,
-      });
-      if (historyManager) {
-        historyManager.saveProgress(surahNumber, ayahNumber, pageNumber);
-      }
-    }
-  );
-
-  ipcMain.on("clear-reading-history", () => {
-    console.log("Clearing reading history");
-    historyManager?.clearHistory();
   });
 
   // Clean up on window close
